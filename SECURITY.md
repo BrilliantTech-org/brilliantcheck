@@ -4,7 +4,7 @@
 
 | Version | Supported |
 |---------|-----------|
-| v0.01 (dev) | ✅ |
+| dev | ✅ |
 
 ## Reporting a vulnerability
 
@@ -21,6 +21,6 @@ We aim to acknowledge reports within 72 hours.
 
 ## Scope notes
 
-- brilliantcheck is **read-only** in v0.01: it does not write to devices.
+- brilliantcheck is **read-only**: it does not write to devices.
 - Never commit secrets (API keys, tokens, signing keys, user data) or device identifiers (IMEI/serial) to the repo.
 - Hardware identifiers handled by the tool must be treated as sensitive.

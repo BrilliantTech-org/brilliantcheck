@@ -4,9 +4,9 @@ A universal **device identity, authenticity verification, and hardware diagnosis
 
 Brilliantcheck helps repair shops, resellers, and end users determine whether a device is **original, fake, or cloned**, and diagnose hardware health — for **Samsung, Apple, Tecno, Itel, Oppo, Xiaomi, Nokia, Infinix**, and more devices that are quick to pirate.
 
-> Status: **v0.01 scaffolding.** Read-only verification only — no flashing, no unlocking.
+> Status: **Early development.** Read-only verification only — no flashing, no unlocking.
 
-## v0.01 scope
+## Scope
 
 - Read device identity: **IMEI, serial, model, brand, chipset, firmware**.
 - Verify against **official/bundled fingerprint data** + online lookup (fallback).
@@ -14,7 +14,7 @@ Brilliantcheck helps repair shops, resellers, and end users determine whether a 
 - Hardware diagnostics: battery, storage, sensors, camera, network (planned).
 - **No flashing, no unlocking, no IMEI writes** — read-only.
 
-## Supported transports (v0.01)
+## Supported transports
 
 - **ADB** (Android — Samsung, Tecno, Itel, Oppo, Xiaomi, Nokia, Infinix, …)
 - **Apple / libimobiledevice** (iOS devices)
@@ -24,12 +24,12 @@ Brilliantcheck helps repair shops, resellers, and end users determine whether a 
 - **Core:** Rust (`flashpilot`-style bridge binary) — USB/transport, protocol, verification logic.
 - **GUI:** Python (PyQt6) — desktop app, delegates to the Rust bridge.
 - **Web (optional later):** React + Vite dashboard.
-- **Database:** SQLite (v0.01), migrating to PostgreSQL later.
+- **Database:** SQLite, migrating to PostgreSQL later.
 - **JavaScript:** auxiliary tooling where needed.
 
 ## Safety
 
-Brilliantcheck is **read-only** in v0.01. It never writes to a device.
+Brilliantcheck is **read-only**. It never writes to a device.
 Always verify device identity before trusting a verdict. Use only on devices you own or are authorized to service.
 
 ## Getting started
