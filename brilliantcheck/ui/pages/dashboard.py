@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QGridLayout
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QGridLayout, QPushButton
 from ...core.db import counts as db_counts
 from ..theme import TEXT_MUTED
 
@@ -25,6 +25,7 @@ def card(title, value, hint, accent="#4F8CFF"):
 class DashboardPage(QWidget):
     def __init__(self, main):
         super().__init__()
+        self.main = main
         lay = QVBoxLayout(self)
         lay.setContentsMargins(28, 24, 28, 24)
         lay.setSpacing(18)
@@ -52,6 +53,20 @@ class DashboardPage(QWidget):
         sec = QLabel("Recent Activity")
         sec.setStyleSheet("font-size:15px;font-weight:700;margin-top:8px;")
         lay.addWidget(sec)
+
+        # Quick actions
+        qa = QLabel("Quick Actions")
+        qa.setStyleSheet("font-size:15px;font-weight:700;margin-top:8px;")
+        lay.addWidget(qa)
+        qarow = QHBoxLayout()
+        for label, key, color in [("🔍 Scan Device", "scan", "#4F8CFF"), ("✅ Verify IMEI", "verify", "#3DDC97"), ("📜 View History", "history", "#FFB020")]:
+            b = QPushButton(label)
+            b.setProperty("class", "primary" if color == "#4F8CFF" else "ghost")
+            b.setCursor(__import__("PySide6.QtCore", fromlist=["Qt"]).Qt.CursorShape.PointingHandCursor)
+            b.clicked.connect(lambda checked, k=key: self.main.switch_page(k))
+            qarow.addWidget(b)
+        qarow.addStretch(1)
+        lay.addLayout(qarow)
 
         empty = QLabel("No checks yet. Connect a device and run a scan to get started.")
         empty.setStyleSheet("color:#9AA0AA;font-size:12px;padding:20px;background:#1E222B;border-radius:12px;")
