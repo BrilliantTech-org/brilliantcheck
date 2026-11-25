@@ -83,6 +83,20 @@ class MainWindow(QMainWindow):
 
         self.switch_page("dashboard")
 
+        # Status bar
+        from PySide6.QtWidgets import QStatusBar
+        from PySide6.QtCore import QTimer
+        sb = QStatusBar()
+        self.setStatusBar(sb)
+        self._bridge_label = QLabel("Bridge: " + ("ready" if __import__("brilliantcheck.core.bridge", fromlist=["bridge_path"]).bridge_path() else "missing"))
+        sb.addWidget(self._bridge_label)
+        self._clock = QLabel()
+        sb.addPermanentWidget(self._clock)
+        t = QTimer(self)
+        t.timeout.connect(lambda: self._clock.setText(__import__("datetime").datetime.now().strftime("%H:%M:%S")))
+        t.start(1000)
+        self._clock.setText(__import__("datetime").datetime.now().strftime("%H:%M:%S"))
+
     def switch_page(self, key):
         target = self.pages[key]
         # fade transition
