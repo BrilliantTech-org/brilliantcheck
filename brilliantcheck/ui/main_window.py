@@ -1,4 +1,5 @@
 from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve
+from PySide6.QtWidgets import QGraphicsOpacityEffect
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QStackedWidget,
     QPushButton, QLabel, QFrame, QScrollArea,
@@ -83,7 +84,18 @@ class MainWindow(QMainWindow):
         self.switch_page("dashboard")
 
     def switch_page(self, key):
-        self.stack.setCurrentWidget(self.pages[key])
+        target = self.pages[key]
+        # fade transition
+        eff = QGraphicsOpacityEffect(target)
+        target.setGraphicsEffect(eff)
+        anim = QPropertyAnimation(eff, b"opacity")
+        anim.setDuration(180)
+        anim.setStartValue(0.0)
+        anim.setEndValue(1.0)
+        anim.setEasingCurve(QEasingCurve.Type.InOutQuad)
+        self.stack.setCurrentWidget(target)
+        anim.start()
+        self._anim = anim
         for k, btn in self.nav_buttons.items():
             btn.setProperty("active", k == key)
             btn.style().unpolish(btn)
