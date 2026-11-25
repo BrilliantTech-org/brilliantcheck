@@ -4,6 +4,7 @@ from PySide6.QtWidgets import (
     QFrame, QTextEdit,
 )
 from ...core.bridge import run
+from ...core.db import add_check
 
 
 class VerifyPage(QWidget):
@@ -71,7 +72,11 @@ class VerifyPage(QWidget):
         self.status.setText("Verifying…")
         res = run(["info", ident])
         if res.get("ok"):
-            self.result.setPlainText(__import__("json").dumps(res.get("data", {}), indent=2))
+            data = res.get("data", {}) or {}
+            self.result.setPlainText(__import__("json").dumps(data, indent=2))
+            verdict = data.get("verdict", "unknown")
+            add_check(ident, brand=data.get("brand"), model=data.get("model"),
+                      imei=data.get("imei"), verdict=verdict, raw=data)
             self.status.setText("Verification complete.")
         else:
             self.result.setPlainText(res.get("stderr") or res.get("error", "Unknown error"))

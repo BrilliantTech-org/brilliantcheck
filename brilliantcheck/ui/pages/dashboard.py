@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QGridLayout
+from ...core.db import counts as db_counts
 from ..theme import TEXT_MUTED
 
 
@@ -36,11 +37,12 @@ class DashboardPage(QWidget):
         lay.addWidget(title)
         lay.addWidget(sub)
 
+        c = db_counts()
         grid = QGridLayout()
         grid.setSpacing(14)
-        grid.addWidget(card("Devices Scanned", "0", "Total devices checked"), 0, 0)
-        grid.addWidget(card("Verified Original", "0", "Passed authenticity", "#3DDC97"), 0, 1)
-        grid.addWidget(card("Flagged Fake/Clone", "0", "Needs attention", "#FF5A5F"), 0, 2)
+        grid.addWidget(card("Devices Scanned", str(c["total"]), "Total devices checked"), 0, 0)
+        grid.addWidget(card("Verified Original", str(c["verified"]), "Passed authenticity", "#3DDC97"), 0, 1)
+        grid.addWidget(card("Flagged Fake/Clone", str(c["flagged"]), "Needs attention", "#FF5A5F"), 0, 2)
         grid.addWidget(card("Hardware Issues", "0", "Diagnostics found", "#FFB020"), 1, 0)
         grid.addWidget(card("Avg. Check Time", "—", "Per device"), 1, 1)
         grid.addWidget(card("Bridge Status", "Ready", "Rust core available", "#3DDC97"), 1, 2)

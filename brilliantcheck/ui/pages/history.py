@@ -2,6 +2,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QFrame, QTableWidget, QTableWidgetItem,
     QHBoxLayout, QPushButton,
 )
+from ...core.db import list_checks, clear_checks
 
 
 class HistoryPage(QWidget):
@@ -32,9 +33,12 @@ class HistoryPage(QWidget):
         row = QHBoxLayout()
         clear = QPushButton("Clear History")
         clear.setProperty("class", "ghost")
+        clear.clicked.connect(self.do_clear)
         row.addStretch(1)
         row.addWidget(clear)
         cl.addLayout(row)
+
+        self.refresh()
 
         lay.addWidget(card, 1)
 
@@ -42,3 +46,20 @@ class HistoryPage(QWidget):
         empty.setStyleSheet("color:#9AA0AA;font-size:12px;")
         empty.setAlignment(__import__("PySide6.QtCore", fromlist=["Qt"]).Qt.AlignmentFlag.AlignCenter)
         lay.addWidget(empty)
+
+    def refresh(self):
+        import datetime
+        rows = list_checks()
+        self.table.setRowCount(len(rows))
+        for i, r in enumerate(rows):
+            ts = r.get("created_at")
+            dt = datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M") if ts else ""
+            self.table.setItem(i, 0, QTableWidgetItem(dt))
+            self.table.setItem(i, 1, QTableWidgetItem(str(r.get("identifier") or "")))
+            self.table.setItem(i, 2, QTableWidgetItem(str(r.get("brand") or "")))
+            self.table.setItem(i, 3, QTableWidgetItem(str(r.get("model") or "")))
+            self.table.setItem(i, 4, QTableWidgetItem(str(r.get("verdict") or "")))
+
+    def do_clear(self):
+        clear_checks()
+        self.refresh()
