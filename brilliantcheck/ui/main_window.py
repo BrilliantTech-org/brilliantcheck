@@ -10,6 +10,7 @@ NAV = [
     ("🏠", "Dashboard", "dashboard"),
     ("🔍", "Device Scan", "scan"),
     ("✅", "Verify", "verify"),
+    ("📶", "Wireless", "wireless"),
     ("📜", "History", "history"),
     ("⚙️", "Settings", "settings"),
 ]
@@ -68,6 +69,7 @@ class MainWindow(QMainWindow):
         from .pages.dashboard import DashboardPage
         from .pages.scan import ScanPage
         from .pages.verify import VerifyPage
+        from .pages.wireless import WirelessPage
         from .pages.history import HistoryPage
         from .pages.settings import SettingsPage
 
@@ -75,10 +77,11 @@ class MainWindow(QMainWindow):
             "dashboard": DashboardPage(self),
             "scan": ScanPage(self),
             "verify": VerifyPage(self),
+            "wireless": WirelessPage(self),
             "history": HistoryPage(self),
             "settings": SettingsPage(self),
         }
-        for key in ("dashboard", "scan", "verify", "history", "settings"):
+        for key in ("dashboard", "scan", "verify", "wireless", "history", "settings"):
             self.stack.addWidget(self.pages[key])
 
         self.switch_page("dashboard")

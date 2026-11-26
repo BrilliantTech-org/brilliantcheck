@@ -25,6 +25,23 @@ enum Commands {
         /// 15-digit IMEI
         imei: String,
     },
+    /// Switch a USB-connected device to TCP (wireless) mode on port 5555
+    AdbTcpip {
+        /// Device serial (USB)
+        serial: String,
+        /// TCP port (default 5555)
+        port: Option<u16>,
+    },
+    /// Connect adb to a wireless device (ip:port)
+    AdbConnect {
+        /// Target like 192.168.1.5:5555
+        target: String,
+    },
+    /// Disconnect adb from a wireless device (or all if omitted)
+    AdbDisconnect {
+        /// Target like 192.168.1.5:5555 (optional)
+        target: Option<String>,
+    },
 }
 
 #[derive(Serialize, Default)]
@@ -48,6 +65,17 @@ struct DeviceInfo {
     imei: Option<String>,
     transport: String,
     verdict: String,
+}
+
+fn adb_full(args: &[&str]) -> (String, String, bool) {
+    match Command::new("adb").args(args).output() {
+        Ok(out) => (
+            String::from_utf8_lossy(&out.stdout).to_string(),
+            String::from_utf8_lossy(&out.stderr).to_string(),
+            out.status.success(),
+        ),
+        Err(e) => (String::new(), e.to_string(), false),
+    }
 }
 
 fn adb(args: &[&str]) -> Option<String> {
@@ -212,6 +240,33 @@ fn main() {
         Some(Commands::ImeiCheck { imei }) => {
             let report = imei_check(&imei);
             println!("{}", serde_json::to_string_pretty(&report).unwrap());
+        }
+        Some(Commands::AdbTcpip { serial, port }) => {
+            let p = port.unwrap_or(5555).to_string();
+            let sref = serial.as_str();
+            let pref = p.as_str();
+            let (stdout, stderr, ok) = adb_full(&["-s", sref, "tcpip", pref]);
+            let msg = format!("{}{}", stdout.trim(), if stderr.trim().is_empty() { String::new() } else { format!(" ({})", stderr.trim()) });
+            let out = serde_json::json!({ "ok": ok, "port": p, "message": msg.trim() });
+            println!("{}", serde_json::to_string_pretty(&out).unwrap());
+        }
+        Some(Commands::AdbConnect { target }) => {
+            let (stdout, stderr, ok) = adb_full(&["connect", &target]);
+            let msg = if stdout.trim().is_empty() { stderr.trim().to_string() } else { stdout.trim().to_string() };
+            let out = serde_json::json!({ "ok": ok, "target": target, "message": msg });
+            println!("{}", serde_json::to_string_pretty(&out).unwrap());
+        }
+        Some(Commands::AdbDisconnect { target }) => {
+            let (stdout, stderr, ok) = match &target {
+                Some(t) => {
+                    let tr = t.as_str();
+                    adb_full(&["disconnect", tr])
+                }
+                None => adb_full(&["disconnect"]),
+            };
+            let msg = if stdout.trim().is_empty() { stderr.trim().to_string() } else { stdout.trim().to_string() };
+            let out = serde_json::json!({ "ok": ok, "message": msg });
+            println!("{}", serde_json::to_string_pretty(&out).unwrap());
         }
         Some(Commands::Info { serial }) => {
             // If serial matches a connected device, gather; else treat as identifier
