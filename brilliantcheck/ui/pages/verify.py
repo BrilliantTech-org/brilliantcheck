@@ -70,13 +70,17 @@ class VerifyPage(QWidget):
             self.status.setText("Please enter an identifier.")
             return
         self.status.setText("Verifying…")
-        res = run(["info", ident])
+        if ident.isdigit() and len(ident) == 15:
+            res = run(["imei-check", ident])
+        else:
+            res = run(["info", ident])
         if res.get("ok"):
             data = res.get("data", {}) or {}
             self.result.setPlainText(__import__("json").dumps(data, indent=2))
             verdict = data.get("verdict", "unknown")
             add_check(ident, brand=data.get("brand"), model=data.get("model"),
-                      imei=data.get("imei"), verdict=verdict, raw=data)
+                      imei=ident if ident.isdigit() else data.get("imei"),
+                      verdict=verdict, raw=data)
             self.status.setText("Verification complete.")
         else:
             self.result.setPlainText(res.get("stderr") or res.get("error", "Unknown error"))

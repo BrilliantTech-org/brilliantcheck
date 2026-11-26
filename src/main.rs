@@ -20,6 +20,22 @@ enum Commands {
         /// Device serial / identifier
         serial: String,
     },
+    /// Validate an IMEI (15 digits) and report TAC/check-digit
+    ImeiCheck {
+        /// 15-digit IMEI
+        imei: String,
+    },
+}
+
+#[derive(Serialize, Default)]
+struct ImeiReport {
+    imei: String,
+    valid_format: bool,
+    valid_luhn: bool,
+    tac: Option<String>,
+    check_digit: Option<String>,
+    verdict: String,
+    note: String,
 }
 
 #[derive(Serialize, Default)]
@@ -124,6 +140,59 @@ fn detect_devices() -> Vec<DeviceInfo> {
     devices
 }
 
+fn luhn_imei_valid(imei: &str) -> bool {
+    if imei.len() != 15 || !imei.chars().all(|c| c.is_ascii_digit()) {
+        return false;
+    }
+    let digits: Vec<u32> = imei.chars().filter_map(|c| c.to_digit(10)).collect();
+    let mut sum = 0u32;
+    // process from right, doubling every second digit (excluding check digit)
+    for (i, d) in digits[..14].iter().rev().enumerate() {
+        if i % 2 == 0 {
+            // second from right position -> double
+            let doubled = d * 2;
+            sum += if doubled > 9 { doubled - 9 } else { doubled };
+        } else {
+            sum += d;
+        }
+    }
+    let check = (10 - (sum % 10)) % 10;
+    check == digits[14]
+}
+
+fn imei_check(imei: &str) -> ImeiReport {
+    let valid_format = imei.len() == 15 && imei.chars().all(|c| c.is_ascii_digit());
+    if !valid_format {
+        return ImeiReport {
+            imei: imei.to_string(),
+            valid_format: false,
+            valid_luhn: false,
+            tac: None,
+            check_digit: None,
+            verdict: "invalid".to_string(),
+            note: "IMEI must be exactly 15 digits.".to_string(),
+        };
+    }
+    let valid_luhn = luhn_imei_valid(imei);
+    let tac = Some(imei[..8].to_string());
+    let check_digit = Some(imei[14..].to_string());
+    let verdict = if valid_luhn { "valid" } else { "invalid" }.to_string();
+    let note = if valid_luhn {
+        "Luhn check digit OK. Cross-check TAC/model against official sources to confirm authenticity.".to_string()
+    } else {
+        "Luhn check digit FAILED — likely fake or mistyped IMEI.".to_string()
+    };
+    ImeiReport {
+        imei: imei.to_string(),
+        valid_format: true,
+        valid_luhn,
+        tac,
+        check_digit,
+        verdict,
+        note,
+    }
+}
+
 fn main() {
     let cli = Cli::parse();
     match cli.command {
@@ -139,6 +208,10 @@ fn main() {
             };
             let out = serde_json::json!({ "devices": devices, "message": msg });
             println!("{}", serde_json::to_string_pretty(&out).unwrap_or_else(|_| "{}".to_string()));
+        }
+        Some(Commands::ImeiCheck { imei }) => {
+            let report = imei_check(&imei);
+            println!("{}", serde_json::to_string_pretty(&report).unwrap());
         }
         Some(Commands::Info { serial }) => {
             // If serial matches a connected device, gather; else treat as identifier
