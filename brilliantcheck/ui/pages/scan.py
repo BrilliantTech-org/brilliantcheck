@@ -75,7 +75,12 @@ class ScanPage(QWidget):
         if res.get("ok"):
             data = res.get("data", {})
             self.results.setPlainText(json.dumps(data, indent=2))
-            devs = data.get("devices", []) if isinstance(data, dict) else []
+            if isinstance(data, list):
+                devs = data
+            elif isinstance(data, dict):
+                devs = data.get("devices", [])
+            else:
+                devs = []
             self.status.setText(f"Found {len(devs)} device(s).")
         else:
             self.results.setPlainText(res.get("stderr") or res.get("error", "Unknown error"))
