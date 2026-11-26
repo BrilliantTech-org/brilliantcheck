@@ -3,6 +3,9 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit,
     QFrame, QTextEdit, QComboBox,
 )
+import io
+from PySide6.QtGui import QPixmap
+from PySide6.QtCore import QByteArray
 from ...core.bridge import run
 
 
@@ -68,6 +71,26 @@ class WirelessPage(QWidget):
         c2.addLayout(row2)
         lay.addWidget(card2)
 
+        # QR code
+        cardq = QFrame(); cardq.setProperty("class", "card")
+        cq = QVBoxLayout(cardq); cq.setContentsMargins(16, 14, 16, 14); cq.setSpacing(10)
+        cq.addWidget(QLabel("3) QR code for connecting"))
+        self.qr_label = QLabel("No QR generated yet.")
+        self.qr_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.qr_label.setMinimumSize(220, 220)
+        cq.addWidget(self.qr_label, 0, Qt.AlignmentFlag.AlignCenter)
+        qrow = QHBoxLayout()
+        self.qr_input = QLineEdit()
+        self.qr_input.setPlaceholderText("Text to encode (e.g. 192.168.1.5:5555)")
+        qrow.addWidget(self.qr_input, 1)
+        self.qr_btn = QPushButton("Generate QR")
+        self.qr_btn.setProperty("class", "primary")
+        self.qr_btn.setCursor(Qt.PointingHandCursor)
+        self.qr_btn.clicked.connect(self.do_qr)
+        qrow.addWidget(self.qr_btn)
+        cq.addLayout(qrow)
+        lay.addWidget(cardq)
+
         # Output
         card3 = QFrame(); card3.setProperty("class", "card")
         c3 = QVBoxLayout(card3); c3.setContentsMargins(16, 14, 16, 14)
@@ -125,3 +148,20 @@ class WirelessPage(QWidget):
             self.run_cmd(["adb-disconnect", target])
         else:
             self.run_cmd(["adb-disconnect"])
+
+    def do_qr(self):
+        text = self.qr_input.text().strip()
+        if not text:
+            text = self.ip_input.text().strip() or "brilliantcheck"
+        try:
+            import qrcode
+            img = qrcode.make(text)
+            buf = io.BytesIO()
+            img.save(buf, format="PNG")
+            pm = QPixmap()
+            pm.loadFromData(QByteArray(buf.getvalue()), "PNG")
+            self.qr_label.setPixmap(pm.scaled(200, 200, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+            self.qr_label.setText("")
+            self.status.setText(f"QR generated for: {text}")
+        except Exception as e:
+            self.status.setText(f"QR failed: {e}")
