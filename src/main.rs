@@ -132,7 +132,13 @@ fn main() {
         }
         Some(Commands::Detect) => {
             let devices = detect_devices();
-            println!("{}", serde_json::to_string_pretty(&devices).unwrap_or_else(|_| "[]".to_string()));
+            let msg = if devices.is_empty() {
+                "No device connected"
+            } else {
+                "Devices detected"
+            };
+            let out = serde_json::json!({ "devices": devices, "message": msg });
+            println!("{}", serde_json::to_string_pretty(&out).unwrap_or_else(|_| "{}".to_string()));
         }
         Some(Commands::Info { serial }) => {
             // If serial matches a connected device, gather; else treat as identifier
