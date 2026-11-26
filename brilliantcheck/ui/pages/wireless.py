@@ -30,7 +30,7 @@ class WirelessPage(QWidget):
 
         title = QLabel("Wireless Debugging")
         title.setStyleSheet("font-size:20px;font-weight:700;")
-        sub = QLabel("Connect to a device over Wi-Fi (ADB TCP mode).")
+        sub = QLabel("Connect to a device over Wi-Fi (ADB TCP mode). Phone and PC must be on the same Wi-Fi network.")
         sub.setStyleSheet("color:#9AA0AA;font-size:12px;")
         lay.addWidget(title)
         lay.addWidget(sub)
@@ -70,6 +70,24 @@ class WirelessPage(QWidget):
         row2.addWidget(self.disc_btn)
         c2.addLayout(row2)
         lay.addWidget(card2)
+
+        # Pairing (Android 11+)
+        cardp = QFrame(); cardp.setProperty("class", "card")
+        cp = QVBoxLayout(cardp); cp.setContentsMargins(16, 14, 16, 14); cp.setSpacing(10)
+        cp.addWidget(QLabel("Android 11+ wireless pairing (uses pairing code)"))
+        rp = QHBoxLayout()
+        self.pair_target = QLineEdit(); self.pair_target.setPlaceholderText("192.168.1.5:42000")
+        rp.addWidget(self.pair_target, 1)
+        self.pair_code = QLineEdit(); self.pair_code.setPlaceholderText("6-digit code")
+        self.pair_code.setFixedWidth(120)
+        rp.addWidget(self.pair_code)
+        self.pair_btn = QPushButton("Pair")
+        self.pair_btn.setProperty("class", "primary")
+        self.pair_btn.setCursor(Qt.PointingHandCursor)
+        self.pair_btn.clicked.connect(self.do_pair)
+        rp.addWidget(self.pair_btn)
+        cp.addLayout(rp)
+        lay.addWidget(cardp)
 
         # QR code
         cardq = QFrame(); cardq.setProperty("class", "card")
@@ -148,6 +166,14 @@ class WirelessPage(QWidget):
             self.run_cmd(["adb-disconnect", target])
         else:
             self.run_cmd(["adb-disconnect"])
+
+    def do_pair(self):
+        target = self.pair_target.text().strip()
+        code = self.pair_code.text().strip()
+        if not target or not code:
+            self.status.setText("Enter target and pairing code.")
+            return
+        self.run_cmd(["adb-pair", target, code])
 
     def do_qr(self):
         text = self.qr_input.text().strip()

@@ -42,6 +42,13 @@ enum Commands {
         /// Target like 192.168.1.5:5555 (optional)
         target: Option<String>,
     },
+    /// Pair with an Android 11+ wireless debugging device using a pairing code
+    AdbPair {
+        /// Target like 192.168.1.5:42000
+        target: String,
+        /// 6-digit pairing code
+        code: String,
+    },
 }
 
 #[derive(Serialize, Default)]
@@ -267,6 +274,40 @@ fn main() {
             let msg = if stdout.trim().is_empty() { stderr.trim().to_string() } else { stdout.trim().to_string() };
             let out = serde_json::json!({ "ok": ok, "message": msg });
             println!("{}", serde_json::to_string_pretty(&out).unwrap());
+        }
+        Some(Commands::AdbPair { target, code }) => {
+            use std::io::Write;
+            let child = Command::new("adb")
+                .args(["pair", &target])
+                .stdin(std::process::Stdio::piped())
+                .stdout(std::process::Stdio::piped())
+                .stderr(std::process::Stdio::piped())
+                .spawn();
+            match child {
+                Ok(mut c) => {
+                    if let Some(mut stdin) = c.stdin.take() {
+                        let _ = writeln!(stdin, "{}", code);
+                    }
+                    let out = c.wait_with_output();
+                    match out {
+                        Ok(o) => {
+                            let stdout = String::from_utf8_lossy(&o.stdout).to_string();
+                            let stderr = String::from_utf8_lossy(&o.stderr).to_string();
+                            let msg = if stdout.trim().is_empty() { stderr.trim().to_string() } else { stdout.trim().to_string() };
+                            let res = serde_json::json!({ "ok": o.status.success(), "target": target, "message": msg });
+                            println!("{}", serde_json::to_string_pretty(&res).unwrap());
+                        }
+                        Err(e) => {
+                            let res = serde_json::json!({ "ok": false, "target": target, "message": e.to_string() });
+                            println!("{}", serde_json::to_string_pretty(&res).unwrap());
+                        }
+                    }
+                }
+                Err(e) => {
+                    let res = serde_json::json!({ "ok": false, "target": target, "message": e.to_string() });
+                    println!("{}", serde_json::to_string_pretty(&res).unwrap());
+                }
+            }
         }
         Some(Commands::Info { serial }) => {
             // If serial matches a connected device, gather; else treat as identifier
