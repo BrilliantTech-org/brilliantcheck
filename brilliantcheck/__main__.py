@@ -1,8 +1,26 @@
+import os
 import sys
+
+# When executed as a script (python brilliantcheck), ensure package context
+if __package__ in (None, ""):
+    parent = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if parent not in sys.path:
+        sys.path.insert(0, parent)
+    __package__ = "brilliantcheck"
+
+# Auto-detect an X display if not provided
+if not os.environ.get("DISPLAY"):
+    for d in (":0", ":1", ":2"):
+        sock = f"/tmp/.X11-unix/X{d.lstrip(':')}"
+        if os.path.exists(sock):
+            os.environ["DISPLAY"] = d
+            break
+
 from PySide6.QtWidgets import QApplication, QSplashScreen
 from PySide6.QtGui import QPixmap, QFont, QColor, QPainter
 from PySide6.QtCore import Qt, QTimer
-from .ui.main_window import MainWindow
+
+from brilliantcheck.ui.main_window import MainWindow
 
 
 def make_splash():

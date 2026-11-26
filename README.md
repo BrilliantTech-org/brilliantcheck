@@ -42,7 +42,8 @@ cargo build --release
 # Python GUI
 python -m venv .venv
 .venv/bin/pip install -r requirements.txt
-.venv/bin/python -m brilliantcheck
+# Run (display is auto-detected; no need to set DISPLAY)
+.venv/bin/python brilliantcheck
 ```
 
 ## License
